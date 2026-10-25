@@ -1,15 +1,25 @@
 
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { signIn, signUp } from '../services/authService'
+import { useAuth } from '../contexts/useAuth'
 
 export function LoginPage() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [isSignUp, setIsSignUp] = useState(false)
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true })
+    }
+  }, [user, navigate])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -20,12 +30,16 @@ export function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { data, error } = await signUp(email, password)
+        const { data, error } = await signUp(
+          email,
+          password,
+          displayName.trim()
+        )
 
         if (error) throw error
 
         if (data.session) {
-          setMessage('Cadastro realizado e login efetuado!')
+          navigate('/', { replace: true })
         } else {
           setMessage(
             'Cadastro realizado. Confira seu e-mail para confirmar a conta.'
@@ -36,7 +50,7 @@ export function LoginPage() {
 
         if (error) throw error
 
-        setMessage('Login realizado com sucesso!')
+        navigate('/', { replace: true })
       }
     } catch (err) {
       setError(
@@ -66,6 +80,25 @@ export function LoginPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {isSignUp && (
+          <div>
+            <label htmlFor="displayName" className="mb-2 block text-sm font-medium">
+              Nome completo
+            </label>
+
+            <input
+              id="displayName"
+              type="text"
+              autoComplete="name"
+              required={isSignUp}
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+              placeholder="Seu nome completo"
+            />
+          </div>
+        )}
+
         <div>
           <label htmlFor="email" className="mb-2 block text-sm font-medium">
             E-mail
@@ -132,6 +165,7 @@ export function LoginPage() {
           type="button"
           onClick={() => {
             setIsSignUp(!isSignUp)
+            setDisplayName('')
             setMessage('')
             setError('')
           }}

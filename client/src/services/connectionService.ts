@@ -67,6 +67,16 @@ export async function getReceivedRequests() {
   return data ?? []
 }
 
+export async function getAcceptedConnections() {
+  const { data, error } = await supabase.rpc(
+    'get_accepted_connections'
+  )
+
+  if (error) throw error
+
+  return data ?? []
+}
+
 export async function respondToConnectionRequest(
   connectionId: string,
   status: 'accepted' | 'declined'
@@ -96,4 +106,19 @@ export async function respondToConnectionRequest(
       'Solicitação não encontrada ou já respondida.'
     )
   }
+}
+
+export async function setConnectionLocationSharing(
+  connectionId: string,
+  enabled: boolean
+) {
+  const { error } = await supabase.rpc(
+    'set_connection_location_sharing',
+    {
+      p_connection_id: connectionId,
+      p_enabled: enabled,
+    }
+  )
+
+  if (error) throw error
 }

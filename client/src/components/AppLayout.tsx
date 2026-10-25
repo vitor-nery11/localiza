@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
-import { LogOut, MapPin, Settings, Users } from 'lucide-react'
+import { LogOut, MapPin, Navigation, Settings, Users } from 'lucide-react'
 import { useAuth } from '../contexts/useAuth'
 import { signOut } from '../services/authService'
 
@@ -52,6 +52,13 @@ export function AppLayout() {
             </Link>
           )}
 
+          {user && (
+            <Link to="/localizacao" className="flex items-center gap-2 text-slate-300 hover:text-white">
+              <Navigation size={18} />
+              Minha localização
+            </Link>
+          )}
+
           {!user && (
             <Link to="/login" className="flex items-center gap-2 text-slate-300 hover:text-white">
               <Users size={18} />
@@ -59,10 +66,12 @@ export function AppLayout() {
             </Link>
           )}
 
-          <Link to="/configuracoes" className="flex items-center gap-2 text-slate-300 hover:text-white">
-            <Settings size={18} />
-            Configurações
-          </Link>
+          {user && (
+            <Link to="/configuracoes" className="flex items-center gap-2 text-slate-300 hover:text-white">
+              <Settings size={18} />
+              Configurações
+            </Link>
+          )}
 
           {user && (
             <button
