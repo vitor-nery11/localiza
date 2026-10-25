@@ -5,7 +5,7 @@ export interface Coordinates {
   longitude: number
 }
 
-export function getCurrentPosition(): Promise<Coordinates> {
+export function getCurrentPosition(highAccuracy: boolean = true): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(
@@ -22,6 +22,12 @@ export function getCurrentPosition(): Promise<Coordinates> {
         })
       },
       error => {
+        if (highAccuracy && error.code === error.TIMEOUT) {
+          // Se esgotar o tempo em alta precisão (ex: ambiente fechado), tenta precisão de rede
+          getCurrentPosition(false).then(resolve).catch(reject)
+          return
+        }
+
         switch (error.code) {
           case error.PERMISSION_DENIED:
             reject(new Error('Você não autorizou o acesso à localização.'))
@@ -37,9 +43,9 @@ export function getCurrentPosition(): Promise<Coordinates> {
         }
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000,
+        enableHighAccuracy: highAccuracy,
+        timeout: highAccuracy ? 10000 : 15000,
+        maximumAge: 15000,
       }
     )
   })
@@ -71,7 +77,8 @@ export function watchCurrentPosition(
           onError(new Error('Não foi possível obter sua posição.'))
           break
         case error.TIMEOUT:
-          onError(new Error('A solicitação de localização expirou.'))
+          // Timeout temporário de leitura GPS (comum em ambientes fechados); o navegador continuará tentando
+          console.warn('Aguardando sinal GPS mais preciso...')
           break
         default:
           onError(new Error('Ocorreu um erro ao monitorar a localização.'))
@@ -79,8 +86,8 @@ export function watchCurrentPosition(
     },
     {
       enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 5000,
+      timeout: 25000,
+      maximumAge: 10000,
     }
   )
 

@@ -1,10 +1,13 @@
 import { AppRoutes } from './routes/AppRoutes'
 import { AuthProvider } from './contexts/AuthContext'
+import { TrackingProvider } from './contexts/TrackingContext'
 
 export default function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <TrackingProvider>
+        <AppRoutes />
+      </TrackingProvider>
     </AuthProvider>
   )
 }

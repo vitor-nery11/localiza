@@ -21,6 +21,7 @@ import {
   getCurrentPosition,
   type Coordinates,
 } from '../services/locationService'
+import { useTracking } from '../contexts/useTracking'
 
 interface Profile {
   id: string
@@ -33,8 +34,10 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  const { currentCoords } = useTracking()
   const [sharedLocations, setSharedLocations] = useState<SharedLocation[]>([])
   const [myCoordinates, setMyCoordinates] = useState<Coordinates | null>(null)
+  const activeCoordinates = currentCoords || myCoordinates
   const [loadingLocations, setLoadingLocations] = useState(false)
   const [locationMessage, setLocationMessage] = useState('')
 
@@ -108,7 +111,7 @@ export function DashboardPage() {
   // Seleciona todas as pessoas e também você
   function selectAllUsers() {
     setSelectedUserIds(sharedLocations.map(l => l.user_id))
-    if (myCoordinates) {
+    if (activeCoordinates) {
       setShowMyPosition(true)
     }
   }
@@ -126,9 +129,9 @@ export function DashboardPage() {
 
   // Totais para contagem do filtro
   const totalVisible =
-    visibleLocationsOnMap.length + (showMyPosition && myCoordinates ? 1 : 0)
+    visibleLocationsOnMap.length + (showMyPosition && activeCoordinates ? 1 : 0)
   const totalAvailable =
-    sharedLocations.length + (myCoordinates ? 1 : 0)
+    sharedLocations.length + (activeCoordinates ? 1 : 0)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -324,25 +327,25 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  if (!myCoordinates) {
+                  if (!activeCoordinates) {
                     await tryGetMyPosition()
                   }
                   setShowMyPosition(prev => !prev)
                 }}
                 className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition ${
-                  showMyPosition && myCoordinates
+                  showMyPosition && activeCoordinates
                     ? 'border-sky-500/70 bg-sky-600/25 text-white shadow-sm'
                     : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                 }`}
                 title={
-                  showMyPosition && myCoordinates
+                  showMyPosition && activeCoordinates
                     ? 'Clique para ocultar sua posição do mapa'
                     : 'Clique para exibir sua posição no mapa'
                 }
               >
                 <span
                   className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${
-                    showMyPosition && myCoordinates
+                    showMyPosition && activeCoordinates
                       ? 'bg-sky-500 text-white'
                       : 'bg-slate-700 text-slate-300'
                   }`}
@@ -350,7 +353,7 @@ export function DashboardPage() {
                   Eu
                 </span>
                 <span>Você (Minha posição)</span>
-                {showMyPosition && myCoordinates ? (
+                {showMyPosition && activeCoordinates ? (
                   <Eye size={12} className="text-sky-400" />
                 ) : (
                   <EyeOff size={12} className="text-slate-500" />
@@ -395,14 +398,14 @@ export function DashboardPage() {
         {/* Componente do Mapa - Mostra você APENAS se showMyPosition for true */}
         <div className="mt-4">
           <LocationMap
-            latitude={showMyPosition ? myCoordinates?.latitude : null}
-            longitude={showMyPosition ? myCoordinates?.longitude : null}
+            latitude={showMyPosition ? activeCoordinates?.latitude : null}
+            longitude={showMyPosition ? activeCoordinates?.longitude : null}
             sharedLocations={visibleLocationsOnMap}
           />
         </div>
 
         {/* Aviso se nada estiver selecionado no mapa */}
-        {(sharedLocations.length > 0 || myCoordinates !== null) && totalVisible === 0 && (
+        {(sharedLocations.length > 0 || activeCoordinates !== null) && totalVisible === 0 && (
           <p className="mt-3 text-center text-xs text-amber-400/90 bg-amber-950/30 border border-amber-500/30 rounded-lg p-2.5">
             ⚠️ Nenhuma pessoa está selecionada para exibição. Clique em "Você" ou no nome de uma conexão acima para mostrar no mapa.
           </p>
@@ -418,7 +421,7 @@ export function DashboardPage() {
             {/* Card de Você mesmo */}
             <li
               className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
-                showMyPosition && myCoordinates
+                showMyPosition && activeCoordinates
                   ? 'border-sky-500/40 bg-slate-950/90 shadow-sm'
                   : 'border-slate-800/80 bg-slate-950/40 opacity-75'
               }`}
@@ -426,7 +429,7 @@ export function DashboardPage() {
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
                   className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                    showMyPosition && myCoordinates
+                    showMyPosition && activeCoordinates
                       ? 'bg-sky-600/25 text-sky-300 ring-2 ring-sky-500/30'
                       : 'bg-slate-800 text-slate-400'
                   }`}
@@ -439,13 +442,13 @@ export function DashboardPage() {
                   </p>
                   <p className="flex items-center gap-1 text-[11px] text-sky-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-sky-400"></span>
-                    {showMyPosition && myCoordinates
+                    {showMyPosition && activeCoordinates
                       ? 'Visível no mapa'
                       : 'Oculto do mapa'}
                   </p>
-                  {myCoordinates ? (
+                  {activeCoordinates ? (
                     <p className="text-[11px] text-slate-500 font-mono">
-                      {myCoordinates.latitude.toFixed(4)}, {myCoordinates.longitude.toFixed(4)}
+                      {activeCoordinates.latitude.toFixed(4)}, {activeCoordinates.longitude.toFixed(4)}
                     </p>
                   ) : (
                     <p className="text-[11px] text-slate-500">

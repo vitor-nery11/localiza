@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   getCurrentPosition,
-  watchCurrentPosition,
   saveMyLocation,
   type Coordinates,
 } from '../services/locationService'
@@ -11,19 +10,27 @@ import {
   type SharedLocation,
 } from '../services/sharedLocationService'
 import { Radio, Square, Navigation, Clock, Activity } from 'lucide-react'
+import { useTracking } from '../contexts/useTracking'
 
 export function LocationPage() {
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
+  const [manualCoordinates, setManualCoordinates] = useState<Coordinates | null>(null)
   const [sharedLocations, setSharedLocations] = useState<SharedLocation[]>([])
 
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Estados de rastreamento em tempo real contínuo
-  const [isLiveTracking, setIsLiveTracking] = useState(false)
-  const [lastSentAt, setLastSentAt] = useState<string | null>(null)
-  const [sendCount, setSendCount] = useState(0)
-  const lastSendTimeRef = useRef<number>(0)
+  // Contexto persistente de transmissão em tempo real (sobrevive a recarregamento da página)
+  const {
+    isTracking,
+    currentCoords,
+    lastSentAt,
+    sendCount,
+    trackingError,
+    toggleTracking,
+  } = useTracking()
+
+  // Coordenadas ativas (prioriza o rastreador contínuo, ou a leitura manual)
+  const coordinates = currentCoords || manualCoordinates
 
   async function loadSharedLocations() {
     try {
@@ -39,48 +46,16 @@ export function LocationPage() {
     void loadSharedLocations()
   }, [])
 
-  // Efeito do monitoramento contínuo em tempo real (watchPosition)
-  useEffect(() => {
-    if (!isLiveTracking) return
-
-    const clearWatch = watchCurrentPosition(
-      async coords => {
-        setCoordinates(coords)
-
-        const now = Date.now()
-        // Transmite para o servidor no máximo uma vez a cada 4 segundos para eficiência
-        if (now - lastSendTimeRef.current >= 4000) {
-          lastSendTimeRef.current = now
-          try {
-            await saveMyLocation(coords)
-            setLastSentAt(new Date().toLocaleTimeString('pt-BR'))
-            setSendCount(prev => prev + 1)
-          } catch (err) {
-            console.error('Erro ao transmitir localização em tempo real:', err)
-          }
-        }
-      },
-      err => {
-        setMessage(err.message)
-        setIsLiveTracking(false)
-      }
-    )
-
-    return () => {
-      clearWatch()
-    }
-  }, [isLiveTracking])
-
-  // Disparo manual único
+  // Disparo manual único (quando a transmissão contínua estiver desligada)
   async function handleGetLocation() {
     setLoading(true)
     setMessage('')
-    setCoordinates(null)
+    setManualCoordinates(null)
 
     try {
       const position = await getCurrentPosition()
 
-      setCoordinates(position)
+      setManualCoordinates(position)
       setMessage('Localização obtida. Salvando no servidor...')
 
       await saveMyLocation(position)
@@ -97,31 +72,28 @@ export function LocationPage() {
     }
   }
 
-  function handleToggleLiveTracking() {
-    setIsLiveTracking(prev => {
-      const next = !prev
-      if (next) {
-        setMessage('Transmissão contínua ativa. Monitorando movimentos do GPS...')
-      } else {
-        setMessage('Transmissão em tempo real pausada.')
-      }
-      return next
-    })
+  function handleToggleLive() {
+    if (!isTracking) {
+      setMessage('Transmissão contínua ativada. Suas coordenadas serão enviadas mesmo se você recarregar a página.')
+    } else {
+      setMessage('Transmissão em tempo real pausada.')
+    }
+    toggleTracking()
   }
 
   return (
     <main className="mx-auto max-w-2xl">
       <header>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-2xl sm:text-3xl font-bold">
           Minha localização
         </h1>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-xs sm:text-sm text-slate-400">
           Transmita sua posição via GPS para suas conexões em tempo real ou sob demanda.
         </p>
       </header>
 
-      {/* Painel de Transmissão Ao Vivo */}
-      {isLiveTracking && (
+      {/* Painel de Transmissão Ao Vivo Persistente */}
+      {isTracking && (
         <section className="mt-6 flex items-center justify-between rounded-xl border border-red-500/40 bg-red-950/30 p-4 text-sm text-red-200">
           <div className="flex items-center gap-3">
             <span className="relative flex h-3 w-3">
@@ -129,15 +101,24 @@ export function LocationPage() {
               <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
             </span>
             <div>
-              <p className="font-semibold text-white">Transmissão em tempo real ATIVA</p>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-red-300">
-                {lastSentAt && (
+              <p className="font-semibold text-white text-sm">
+                Transmissão em tempo real ATIVA (Automática)
+              </p>
+              <p className="text-xs text-red-300/90 mt-0.5">
+                Permanecerá transmitindo mesmo se a página for recarregada.
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-red-300">
+                {lastSentAt ? (
                   <span className="flex items-center gap-1">
                     <Clock size={12} /> Último envio: {lastSentAt}
                   </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-amber-300">
+                    <Clock size={12} /> Sincronizando sinal GPS...
+                  </span>
                 )}
                 <span className="flex items-center gap-1">
-                  <Activity size={12} /> {sendCount} atualizações enviadas
+                  <Activity size={12} /> {sendCount} envios realizados
                 </span>
               </div>
             </div>
@@ -147,17 +128,17 @@ export function LocationPage() {
 
       {/* Botões de Ação */}
       <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        {/* Botão de Transmissão Contínua (Tempo Real) */}
+        {/* Botão de Transmissão Contínua (Persistente) */}
         <button
           type="button"
-          onClick={handleToggleLiveTracking}
+          onClick={handleToggleLive}
           className={
-            isLiveTracking
+            isTracking
               ? 'flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-3 text-sm sm:text-base font-semibold text-white shadow-lg shadow-red-950 transition hover:bg-red-500 w-full sm:w-auto'
               : 'flex items-center justify-center gap-2 rounded-lg border border-red-500/40 bg-red-950/60 px-5 py-3 text-sm sm:text-base font-semibold text-red-200 transition hover:bg-red-900/80 hover:text-white w-full sm:w-auto'
           }
         >
-          {isLiveTracking ? (
+          {isTracking ? (
             <>
               <Square size={16} fill="currentColor" />
               Parar transmissão em tempo real
@@ -174,7 +155,7 @@ export function LocationPage() {
         <button
           type="button"
           onClick={handleGetLocation}
-          disabled={loading || isLiveTracking}
+          disabled={loading || isTracking}
           className="flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm sm:text-base font-medium text-slate-300 transition hover:bg-slate-800 disabled:opacity-50 w-full sm:w-auto"
         >
           <Navigation size={16} className="text-blue-400" />
@@ -182,21 +163,26 @@ export function LocationPage() {
         </button>
       </div>
 
-      {message && (
-        <p role="status" className="mt-4 text-sm text-slate-300">
-          {message}
+      {(message || trackingError) && (
+        <p
+          role="status"
+          className={`mt-4 text-sm ${
+            trackingError ? 'text-red-400 font-medium' : 'text-slate-300'
+          }`}
+        >
+          {trackingError || message}
         </p>
       )}
 
       {/* Seção do Mapa e Coordenadas */}
       {(coordinates || sharedLocations.length > 0) && (
-        <section className="mt-6 space-y-3 rounded-xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-semibold">
+        <section className="mt-6 space-y-3 rounded-xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+          <h2 className="text-base sm:text-lg font-semibold">
             {coordinates ? 'Coordenadas obtidas' : 'Localizações ativas no mapa'}
           </h2>
 
           {coordinates && (
-            <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-950 p-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg bg-slate-950 p-3 text-sm">
               <p>
                 <span className="text-slate-400">Latitude: </span>
                 <span className="font-mono text-white">{coordinates.latitude.toFixed(6)}</span>

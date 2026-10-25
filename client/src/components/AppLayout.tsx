@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { LogOut, MapPin, Navigation, Settings, Users, UserCheck } from 'lucide-react'
 import { useAuth } from '../contexts/useAuth'
+import { useTracking } from '../contexts/useTracking'
 import { signOut } from '../services/authService'
 
 export function AppLayout() {
   const { user } = useAuth()
+  const { isTracking } = useTracking()
   const [logoutError, setLogoutError] = useState('')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -48,6 +50,20 @@ export function AppLayout() {
           <span>Localiza</span>
         </Link>
 
+        {isTracking && (
+          <Link
+            to="/localizacao"
+            className="flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-950/60 px-2.5 py-1 text-xs font-semibold text-red-200 shadow-sm shadow-red-950"
+            title="GPS transmitindo ao vivo"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+            </span>
+            <span>Ao Vivo</span>
+          </Link>
+        )}
+
         {user && (
           <div className="flex items-center gap-2.5">
             <Link
@@ -79,6 +95,22 @@ export function AppLayout() {
             <MapPin className="text-blue-500" size={24} />
             Localiza
           </div>
+
+          {isTracking && (
+            <Link
+              to="/localizacao"
+              className="mt-4 flex items-center justify-between rounded-lg border border-red-500/40 bg-red-950/40 p-2.5 text-xs text-red-200 transition hover:bg-red-900/40"
+            >
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                </span>
+                <span className="font-semibold text-white">GPS Ao Vivo</span>
+              </div>
+              <span className="text-[11px] text-red-300">Transmitindo</span>
+            </Link>
+          )}
 
           <nav className="mt-8 flex flex-col gap-1.5">
             <NavLink
@@ -115,15 +147,20 @@ export function AppLayout() {
               <NavLink
                 to="/localizacao"
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition ${
+                  `flex items-center justify-between rounded-lg px-3.5 py-2.5 text-sm font-medium transition ${
                     isActive
                       ? 'bg-blue-600/15 text-blue-400'
                       : 'text-slate-300 hover:bg-slate-900 hover:text-white'
                   }`
                 }
               >
-                <Navigation size={18} />
-                Minha localização
+                <div className="flex items-center gap-3">
+                  <Navigation size={18} />
+                  <span>Minha localização</span>
+                </div>
+                {isTracking && (
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" title="Transmitindo"></span>
+                )}
               </NavLink>
             )}
 
@@ -239,7 +276,15 @@ export function AppLayout() {
               }`
             }
           >
-            <Navigation size={20} />
+            <div className="relative">
+              <Navigation size={20} />
+              {isTracking && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                </span>
+              )}
+            </div>
             <span className="mt-1 text-[11px] font-medium">GPS</span>
           </NavLink>
 
