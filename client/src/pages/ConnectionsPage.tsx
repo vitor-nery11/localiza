@@ -7,30 +7,36 @@ import {
   type UserSearchResult,
 } from '../services/connectionService'
 
+interface ReceivedRequest {
+  connection_id: string
+  requester_id: string
+  display_name: string
+  created_at: string
+}
+
 export function ConnectionsPage() {
   const [email, setEmail] = useState('')
   const [results, setResults] = useState<UserSearchResult[]>([])
-  const [receivedRequests, setReceivedRequests] = useState<
-    { id: string }[]
-  >([])
+  const [requests, setRequests] = useState<ReceivedRequest[]>([])
+  const [requestMessage, setRequestMessage] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    async function loadReceivedRequests() {
-      try {
-        const requests = await getReceivedRequests()
-        setReceivedRequests(requests)
-      } catch (error) {
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : 'Erro ao carregar solicitações recebidas.'
-        )
-      }
+  async function loadRequests() {
+    try {
+      const data = await getReceivedRequests()
+      setRequests(data as ReceivedRequest[])
+    } catch (error) {
+      setRequestMessage(
+        error instanceof Error
+          ? error.message
+          : 'Erro ao carregar solicitações.'
+      )
     }
+  }
 
-    loadReceivedRequests()
+  useEffect(() => {
+    void Promise.resolve().then(loadRequests)
   }, [])
 
   async function handleSearch() {
@@ -74,28 +80,33 @@ export function ConnectionsPage() {
     }
   }
 
-  async function handleRespondToRequest(
+  async function handleRespond(
     connectionId: string,
     status: 'accepted' | 'declined'
   ) {
-    setLoading(true)
+    setRequestMessage('')
 
     try {
       await respondToConnectionRequest(connectionId, status)
-      setReceivedRequests(await getReceivedRequests())
-      setMessage(
+      setRequests(current =>
+        current.filter(
+          request => request.connection_id !== connectionId
+        )
+      )
+
+      setRequestMessage(
         status === 'accepted'
-          ? 'Solicitação de conexão aceita.'
-          : 'Solicitação de conexão recusada.'
+          ? 'Conexão aceita com sucesso.'
+          : 'Solicitação recusada.'
       )
     } catch (error) {
-      setMessage(
+      setRequestMessage(
         error instanceof Error
           ? error.message
           : 'Erro ao responder à solicitação.'
       )
-    } finally {
-      setLoading(false)
+
+      await loadRequests()
     }
   }
 
@@ -107,37 +118,52 @@ export function ConnectionsPage() {
       </p>
 
       <section className="mt-8">
-        <h2 className="text-xl font-semibold">Solicitações recebidas</h2>
-        {receivedRequests.length === 0 ? (
+        <h2 className="text-xl font-semibold">
+          Solicitações recebidas
+        </h2>
+
+        {requestMessage && (
+          <p role="status" className="mt-3 text-sm text-slate-300">
+            {requestMessage}
+          </p>
+        )}
+
+        {requests.length === 0 ? (
           <p className="mt-3 text-sm text-slate-400">
             Você não tem solicitações pendentes.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {receivedRequests.map((request) => (
+            {requests.map(request => (
               <li
-                key={request.id}
+                key={request.connection_id}
                 className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4"
               >
-                <span>Nova solicitação de conexão</span>
+                <div>
+                  <p className="font-medium">
+                    {request.display_name || 'Usuário do Localiza'}
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    Enviou uma solicitação de conexão
+                  </p>
+                </div>
+
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() =>
-                      handleRespondToRequest(request.id, 'accepted')
+                      handleRespond(request.connection_id, 'accepted')
                     }
-                    disabled={loading}
-                    className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-medium hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500"
                   >
                     Aceitar
                   </button>
                   <button
                     type="button"
                     onClick={() =>
-                      handleRespondToRequest(request.id, 'declined')
+                      handleRespond(request.connection_id, 'declined')
                     }
-                    disabled={loading}
-                    className="rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-500"
                   >
                     Recusar
                   </button>
