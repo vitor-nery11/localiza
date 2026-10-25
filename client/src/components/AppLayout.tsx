@@ -45,6 +45,13 @@ export function AppLayout() {
             Mapa
           </Link>
 
+          {user && (
+            <Link to="/connections" className="flex items-center gap-2 text-slate-300 hover:text-white">
+              <Users size={18} />
+              Conexões
+            </Link>
+          )}
+
           {!user && (
             <Link to="/login" className="flex items-center gap-2 text-slate-300 hover:text-white">
               <Users size={18} />
