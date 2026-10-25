@@ -15,3 +15,30 @@ export async function getVisibleLocations(): Promise<SharedLocation[]> {
 
   return (data ?? []) as SharedLocation[]
 }
+
+/**
+ * Escuta atualizações no Supabase Realtime
+ */
+export function subscribeToLocationsChanges(onChange: () => void): () => void {
+  const channel = supabase
+    .channel('realtime-locations-changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'locations' },
+      () => {
+        onChange()
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'user_locations' },
+      () => {
+        onChange()
+      }
+    )
+    .subscribe()
+
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}

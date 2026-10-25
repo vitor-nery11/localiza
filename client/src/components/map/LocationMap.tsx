@@ -4,6 +4,7 @@ import {
   TileLayer,
   Marker,
   Popup,
+  Tooltip,
   useMap,
 } from 'react-leaflet'
 import L from 'leaflet'
@@ -135,25 +136,25 @@ export function LocationMap({
       className={
         isFullscreen
           ? 'fixed inset-0 z-50 flex h-screen w-screen flex-col bg-slate-950'
-          : 'relative h-[450px] w-full overflow-hidden rounded-xl border border-slate-800'
+          : 'relative h-[320px] sm:h-[420px] md:h-[480px] w-full overflow-hidden rounded-xl border border-slate-800 shadow-inner'
       }
     >
       {/* Botões de Ação do Mapa */}
       {isFullscreen ? (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/95 px-5 py-3 shadow-md backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <span className="font-semibold text-white">
-              Localiza — Visão Ampliada do Mapa
+        <header className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-800 bg-slate-900/95 px-3 py-2 sm:px-5 sm:py-3 shadow-md backdrop-blur-md">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-xs sm:text-sm font-semibold text-white">
+              Localiza — Mapa
             </span>
             {sharedLocations.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/20 px-3 py-0.5 text-xs font-medium text-blue-300">
-                <Users size={12} />
-                {sharedLocations.length} conexões no mapa
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-medium text-blue-300">
+                <Users size={11} />
+                {sharedLocations.length} no mapa
               </span>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* Botão de Retornar à Pessoa que estamos localizando */}
             {primaryPerson && (
               <button
@@ -161,12 +162,12 @@ export function LocationMap({
                 onClick={() =>
                   handleFocusOn([primaryPerson.latitude, primaryPerson.longitude])
                 }
-                className="flex items-center gap-1.5 rounded-lg border border-blue-500/50 bg-blue-600/20 px-3.5 py-1.5 text-xs font-medium text-blue-200 transition hover:bg-blue-600 hover:text-white"
+                className="flex items-center gap-1.5 rounded-lg border border-blue-500/50 bg-blue-600/20 px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-medium text-blue-200 transition hover:bg-blue-600 hover:text-white"
                 title={`Retornar à localização de ${primaryPerson.display_name || 'Amigo'}`}
               >
-                <LocateFixed size={15} className="text-blue-400" />
-                <span>
-                  Retornar a {primaryPerson.display_name || 'pessoa'}
+                <LocateFixed size={14} className="text-blue-400" />
+                <span className="max-w-[110px] sm:max-w-none truncate">
+                  {primaryPerson.display_name || 'Pessoa'}
                 </span>
               </button>
             )}
@@ -176,27 +177,27 @@ export function LocationMap({
               <button
                 type="button"
                 onClick={() => handleFocusOn([latitude, longitude])}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-slate-700 hover:text-white"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium text-slate-200 transition hover:bg-slate-700 hover:text-white"
                 title="Centralizar na minha localização"
               >
-                <Navigation size={14} className="text-emerald-400" />
-                Minha posição
+                <Navigation size={13} className="text-emerald-400" />
+                <span>Eu</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={() => setIsFullscreen(false)}
-              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-medium text-white transition hover:bg-slate-700"
               title="Sair da tela cheia (Esc)"
             >
-              <Minimize2 size={16} />
-              Sair da tela cheia
+              <Minimize2 size={14} />
+              <span className="hidden sm:inline">Sair da tela cheia</span>
             </button>
           </div>
         </header>
       ) : (
-        <div className="absolute top-3 right-3 z-[1000] flex flex-wrap items-center gap-2">
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-[1000] flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 max-w-[calc(100%-60px)]">
           {/* Botão de Retornar à Pessoa (Modo Normal) */}
           {primaryPerson && (
             <button
@@ -204,12 +205,12 @@ export function LocationMap({
               onClick={() =>
                 handleFocusOn([primaryPerson.latitude, primaryPerson.longitude])
               }
-              className="flex items-center gap-1.5 rounded-lg border border-blue-500/40 bg-slate-900/90 px-3 py-2 text-xs font-medium text-blue-300 shadow-lg backdrop-blur-sm transition hover:bg-blue-600 hover:text-white focus:outline-none"
+              className="flex items-center gap-1.5 rounded-lg border border-blue-500/40 bg-slate-900/90 px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-medium text-blue-300 shadow-lg backdrop-blur-sm transition hover:bg-blue-600 hover:text-white focus:outline-none"
               title={`Retornar à localização de ${primaryPerson.display_name || 'Amigo'}`}
             >
-              <LocateFixed size={14} className="text-blue-400" />
-              <span>
-                Retornar a {primaryPerson.display_name || 'pessoa'}
+              <LocateFixed size={13} className="text-blue-400" />
+              <span className="max-w-[90px] sm:max-w-none truncate">
+                {primaryPerson.display_name || 'Pessoa'}
               </span>
             </button>
           )}
@@ -219,10 +220,10 @@ export function LocationMap({
             <button
               type="button"
               onClick={() => handleFocusOn([latitude, longitude])}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-2.5 py-2 text-xs font-medium text-slate-300 shadow-lg backdrop-blur-sm transition hover:bg-slate-800 hover:text-white focus:outline-none"
+              className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/90 px-2 py-1.5 sm:px-2.5 sm:py-2 text-[11px] sm:text-xs font-medium text-slate-300 shadow-lg backdrop-blur-sm transition hover:bg-slate-800 hover:text-white focus:outline-none"
               title="Centralizar na minha posição"
             >
-              <Navigation size={13} className="text-emerald-400" />
+              <Navigation size={12} className="text-emerald-400" />
               <span>Eu</span>
             </button>
           )}
@@ -231,11 +232,11 @@ export function LocationMap({
           <button
             type="button"
             onClick={() => setIsFullscreen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs font-medium text-white shadow-lg backdrop-blur-sm transition hover:bg-slate-800 focus:outline-none"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-medium text-white shadow-lg backdrop-blur-sm transition hover:bg-slate-800 focus:outline-none"
             title="Ver mapa em tela cheia"
           >
-            <Maximize2 size={14} />
-            Tela cheia
+            <Maximize2 size={13} />
+            <span className="hidden xs:inline">Tela cheia</span>
           </button>
         </div>
       )}
@@ -259,6 +260,14 @@ export function LocationMap({
 
           {hasUserPosition && (
             <Marker position={[latitude, longitude]}>
+              <Tooltip
+                permanent
+                direction="top"
+                offset={[0, -32]}
+                className="custom-my-badge"
+              >
+                Você
+              </Tooltip>
               <Popup>
                 <strong>Você está aqui</strong>
                 <br />
@@ -272,6 +281,14 @@ export function LocationMap({
               key={location.user_id}
               position={[location.latitude, location.longitude]}
             >
+              <Tooltip
+                permanent
+                direction="top"
+                offset={[0, -32]}
+                className="custom-user-badge"
+              >
+                {location.display_name || 'Usuário do Localiza'}
+              </Tooltip>
               <Popup>
                 <p className="font-semibold text-slate-900">
                   {location.display_name || 'Usuário do Localiza'}

@@ -183,7 +183,7 @@ export function ConnectionsPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm font-medium shadow-2xl backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-4 ${
+          className={`fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 sm:gap-3 rounded-2xl border px-3.5 py-2.5 sm:px-5 sm:py-3.5 text-xs sm:text-sm font-medium shadow-2xl backdrop-blur-md max-w-[92vw] sm:max-w-md w-auto transition-all duration-300 animate-in fade-in slide-in-from-top-4 ${
             connectionsMessage.includes('Erro') || connectionsMessage.includes('Não foi possível')
               ? 'border-red-500/40 bg-slate-900/95 text-red-300 shadow-red-950/40'
               : 'border-emerald-500/40 bg-slate-900/95 text-white shadow-emerald-950/40'
@@ -392,22 +392,22 @@ export function ConnectionsPage() {
         )}
       </section>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex flex-col sm:flex-row gap-2.5 sm:gap-3">
         <input
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="E-mail da pessoa"
-          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3"
+          placeholder="E-mail da pessoa para conectar"
+          className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500"
         />
 
         <button
           type="button"
           onClick={handleSearch}
           disabled={loading || !email.trim()}
-          className="rounded-lg bg-blue-600 px-4 py-3 font-medium disabled:opacity-50"
+          className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium hover:bg-blue-500 disabled:opacity-50 w-full sm:w-auto transition"
         >
-          {loading ? 'Buscando...' : 'Buscar'}
+          {loading ? 'Buscando...' : 'Buscar pessoa'}
         </button>
       </div>
 

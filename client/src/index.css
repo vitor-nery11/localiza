@@ -1,2 +1,37 @@
-
 @import "tailwindcss";
+
+/* Estilos para os nomes/rótulos permanentes sobre os marcadores do Leaflet */
+.leaflet-tooltip.custom-user-badge {
+  background-color: rgba(15, 23, 42, 0.92) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(59, 130, 246, 0.6) !important;
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
+}
+
+.leaflet-tooltip.custom-user-badge::before {
+  border-top-color: rgba(15, 23, 42, 0.92) !important;
+}
+
+.leaflet-tooltip.custom-my-badge {
+  background-color: rgba(15, 23, 42, 0.92) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(14, 165, 233, 0.6) !important;
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
+}
+
+.leaflet-tooltip.custom-my-badge::before {
+  border-top-color: rgba(15, 23, 42, 0.92) !important;
+}

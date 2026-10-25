@@ -45,6 +45,50 @@ export function getCurrentPosition(): Promise<Coordinates> {
   })
 }
 
+export function watchCurrentPosition(
+  onLocation: (coords: Coordinates) => void,
+  onError?: (error: Error) => void
+): () => void {
+  if (!navigator.geolocation) {
+    if (onError) onError(new Error('Seu navegador não oferece geolocalização.'))
+    return () => {}
+  }
+
+  const watchId = navigator.geolocation.watchPosition(
+    position => {
+      onLocation({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      })
+    },
+    error => {
+      if (!onError) return
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          onError(new Error('Você não autorizou o acesso à localização.'))
+          break
+        case error.POSITION_UNAVAILABLE:
+          onError(new Error('Não foi possível obter sua posição.'))
+          break
+        case error.TIMEOUT:
+          onError(new Error('A solicitação de localização expirou.'))
+          break
+        default:
+          onError(new Error('Ocorreu um erro ao monitorar a localização.'))
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 5000,
+    }
+  )
+
+  return () => {
+    navigator.geolocation.clearWatch(watchId)
+  }
+}
+
 export async function saveMyLocation(
   coordinates: Coordinates
 ): Promise<void> {
